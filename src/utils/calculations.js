@@ -1,8 +1,27 @@
 export const calculateImpermanentLoss = (initialPrice, currentPrice, rangeMin, rangeMax) => {
-    if (!initialPrice || !currentPrice || currentPrice < rangeMin || currentPrice > rangeMax) return 0;
-    const priceRatio = currentPrice / initialPrice;
+    if (!initialPrice || !currentPrice || initialPrice <= 0 || currentPrice <= 0) {
+        return 0;
+    }
+    
+    // Bound prices to range
+    const effectiveCurrentPrice = Math.min(Math.max(currentPrice, rangeMin), rangeMax);
+    const effectiveInitialPrice = Math.min(Math.max(initialPrice, rangeMin), rangeMax);
+    
+    const priceRatio = effectiveCurrentPrice / effectiveInitialPrice;
     const sqrtRatio = Math.sqrt(priceRatio);
-    return -100 * (2 * sqrtRatio / (1 + priceRatio) - 1);
+    
+    // Calculate IL within range
+    const ilInRange = -100 * (2 * sqrtRatio / (1 + priceRatio) - 1);
+    
+    // Add out-of-range impact
+    let totalIL = ilInRange;
+    if (currentPrice < rangeMin) {
+        totalIL += -100 * (1 - rangeMin/currentPrice);
+    } else if (currentPrice > rangeMax) {
+        totalIL += -100 * (1 - currentPrice/rangeMax);
+    }
+    
+    return totalIL;
 };
   
 export const calculateFeeAPR = (volume24h = 0, tvl = 0, fee = 0) => {

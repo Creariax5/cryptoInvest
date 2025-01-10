@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { Card, CardContent } from './Card';
 
-const StatChart = ({ data, metric }) => {
+const StatChart = ({ data, metric, priceRange }) => {
   const formatValue = (value) => {
     switch (metric) {
       case 'volume':
@@ -41,20 +41,26 @@ const StatChart = ({ data, metric }) => {
     return [...data].sort((a, b) => a.date - b.date);
   }, [data]);
 
-  // Calculate Y-axis domain with padding
+  // Calculate Y-axis domain with padding and range bounds if applicable
   const yDomain = useMemo(() => {
     if (!sortedData.length) return [0, 0];
     
     const values = sortedData.map(item => Number(item[dataKey]));
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+    
+    // If showing price chart and range is provided, include range bounds in domain calculation
+    if (metric === 'price' && priceRange) {
+      min = Math.min(min, priceRange.min);
+      max = Math.max(max, priceRange.max);
+    }
     
     const padding = (max - min) * 0.05;
     return [
       Math.max(0, min - padding),
       max + padding
     ];
-  }, [sortedData, dataKey]);
+  }, [sortedData, dataKey, metric, priceRange]);
 
   return (
     <Card className="mt-4 bg-gray-800">
@@ -97,6 +103,30 @@ const StatChart = ({ data, metric }) => {
                 dot={false}
                 strokeWidth={2}
               />
+              {metric === 'price' && priceRange && (
+                <>
+                  <ReferenceLine 
+                    y={priceRange.min} 
+                    stroke="#EF4444"
+                    strokeDasharray="3 3"
+                    label={{
+                      value: `Min: $${priceRange.min.toFixed(2)}`,
+                      position: 'right',
+                      fill: '#EF4444'
+                    }}
+                  />
+                  <ReferenceLine 
+                    y={priceRange.max} 
+                    stroke="#EF4444"
+                    strokeDasharray="3 3"
+                    label={{
+                      value: `Max: $${priceRange.max.toFixed(2)}`,
+                      position: 'right',
+                      fill: '#EF4444'
+                    }}
+                  />
+                </>
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>

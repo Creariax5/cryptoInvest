@@ -11,21 +11,25 @@ import { PoolMetrics } from './components/PoolMetrics';
 import { StatsGrid } from './components/StatsGrid';
 
 const PoolSimulator = ({ poolAddress }) => {
-  const { poolData, positionConfig, uiState, setPositionConfig, error } = usePoolData(poolAddress);
+  const { poolData, positionConfig, uiState, setPositionConfig, setTimeframe } = usePoolData(poolAddress);
   const metrics = usePoolMetrics(poolData, uiState, positionConfig);
 
   if (uiState.loading) {
     return <LoadingState />;
   }
 
-  if (error) {
+  if (uiState.error) {
     return (
       <Alert variant="destructive" className="m-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>{uiState.error}</AlertDescription>
       </Alert>
     );
   }
+
+  const handleTimeframeChange = (days) => {
+    setTimeframe(days);
+  };
 
   return (
     <div className="w-full min-h-screen bg-gray-900 text-white p-6 space-y-6">
@@ -40,6 +44,9 @@ const PoolSimulator = ({ poolAddress }) => {
           <PositionConfig
             positionConfig={positionConfig}
             setPositionConfig={setPositionConfig}
+            currentPrice={uiState.currentPrice}
+            timeframe={uiState.selectedTimeframe}
+            onTimeframeChange={handleTimeframeChange}
           />
           <PositionMetrics 
             metrics={metrics}
@@ -53,7 +60,12 @@ const PoolSimulator = ({ poolAddress }) => {
         />
       </div>
 
-      <StatsGrid poolData={poolData} />
+      <div className="grid grid-cols-2 gap-4">
+        <StatsGrid 
+          poolData={poolData} 
+          priceRange={positionConfig.range}
+        />
+      </div>
     </div>
   );
 };
