@@ -29,6 +29,7 @@ export const usePoolData = (poolAddress) => {
         fetchPoolAnalytics(poolAddress, uiState.selectedTimeframe),
         fetchPoolTicks(poolAddress)
       ]);
+      console.log({ poolInfo, analytics, ticks });
 
       const currentPrice = analytics?.token0Price ? Number(analytics.token0Price) : 0;
       

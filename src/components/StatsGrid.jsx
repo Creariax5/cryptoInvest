@@ -32,9 +32,9 @@ export const StatsGrid = ({ poolData }) => {
   if (!poolData?.analytics) return null;
 
   const calculateFeeAPR = () => {
-    const dailyFee = Number(poolData.analytics.feesUSD) / 10; // 10 days of data
+    const dailyFee = Number(poolData.analytics.feesUSD); // 10 days of data
     const tvl = Number(poolData.analytics.totalValueLockedUSD);
-    return (dailyFee * 365 * 100) / tvl;
+    return (dailyFee * 365) / tvl;
   };
 
   return (
@@ -42,7 +42,7 @@ export const StatsGrid = ({ poolData }) => {
       <div className="grid grid-cols-4 gap-4">
         <StatCard
           icon={<TrendingUp className="w-5 h-5 text-gray-400" />}
-          label="24h Volume"
+          label="Total Volume"
           value={`$${Number(poolData.analytics.volumeUSD).toLocaleString(undefined, {
             maximumFractionDigits: 2
           })}`}
