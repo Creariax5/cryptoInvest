@@ -4,7 +4,7 @@ import PoolSimulator from './PoolSimulator'
 function App() {
   return (
     <div className="w-full min-h-screen">
-      <PoolSimulator poolAddress="0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640" />
+      <PoolSimulator poolAddress="0xcbcdf9626bc03e24f779434178a73a0b4bad62ed" />
     </div>
   )
 }

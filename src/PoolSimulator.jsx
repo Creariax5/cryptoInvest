@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from './components/Alert';
 import { usePoolData } from './hooks/usePoolData';
 import { usePoolMetrics } from './hooks/usePoolMetrics';
@@ -53,7 +53,7 @@ const PoolSimulator = ({ poolAddress }) => {
         />
       </div>
 
-      <StatsGrid metrics={metrics} />
+      <StatsGrid poolData={poolData} />
     </div>
   );
 };

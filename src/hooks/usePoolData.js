@@ -16,7 +16,7 @@ export const usePoolData = (poolAddress) => {
   const [uiState, setUiState] = useState({
     loading: true,
     error: null,
-    selectedTimeframe: 30,
+    selectedTimeframe: 365,
     currentPrice: 0
   });
 
