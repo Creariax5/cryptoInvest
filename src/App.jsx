@@ -1,7 +1,19 @@
 import './App.css'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import PoolSimulator from './PoolSimulator'
 import { Alert, AlertDescription } from './components/Alert'
 import { AlertCircle } from 'lucide-react'
+
+const NotFound = () => (
+  <div className="w-full min-h-screen p-6">
+    <Alert variant="error">
+      <AlertCircle className="h-4 w-4" />
+      <AlertDescription>
+        Page not found. Please check the URL and try again.
+      </AlertDescription>
+    </Alert>
+  </div>
+);
 
 function App() {
   // Get pool address from URL pathname or search params
@@ -23,25 +35,16 @@ function App() {
     return isValidAddress ? poolFromPath : null;
   }
 
-  const poolAddress = getPoolAddress();
-
-  if (!poolAddress) {
-    return (
-      <div className="w-full min-h-screen p-6">
-        <Alert variant="error">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Please provide a valid pool address in the URL (e.g., /0xcbcdf9626bc03e24f779434178a73a0b4bad62ed)
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full min-h-screen">
-      <PoolSimulator poolAddress={poolAddress} />
-    </div>
+    <Router>
+      <Routes>
+        <Route 
+          path="/:address" 
+          element={<PoolSimulator poolAddress={getPoolAddress()} />} 
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
   );
 }
 
