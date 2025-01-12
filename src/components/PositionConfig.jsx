@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "./Card";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/Card";
 
 export const PositionConfig = ({ 
   positionConfig, 

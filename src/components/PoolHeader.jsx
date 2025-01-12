@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardTitle, CardContent } from "./Card";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/Card";
 
 export const PoolHeader = ({ poolAddress, poolInfo, currentPrice }) => (
     <Card className="bg-gray-800">

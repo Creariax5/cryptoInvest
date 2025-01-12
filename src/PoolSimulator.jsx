@@ -1,9 +1,9 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from './components/Alert';
+import { Alert, AlertDescription } from './components/ui/Alert';
 import { usePoolData } from './hooks/usePoolData';
 import { usePoolMetrics } from './hooks/usePoolMetrics';
-import { LoadingState } from './components/LoadingState';
+import { LoadingState } from './components/ui/LoadingState';
 import { PoolHeader } from './components/PoolHeader';
 import { PositionConfig } from './components/PositionConfig';
 import { PositionMetrics } from './components/PositionMetrics';

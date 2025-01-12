@@ -1,5 +1,5 @@
-import { Card, CardHeader, CardTitle, CardContent } from "./Card";
-import { Alert, AlertCircle, AlertDescription } from "./Alert";
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/Card";
+import { Alert, AlertCircle, AlertDescription } from "./ui/Alert";
 
 export const PositionMetrics = ({ metrics, positionConfig, isInRange }) => (
     <Card className="bg-gray-800">

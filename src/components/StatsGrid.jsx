@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { TrendingUp, DollarSign, Activity, Percent, BarChart2 } from 'lucide-react';
-import { Card, CardContent } from './Card';
-import StatChart from './StatChart';
+import { Card, CardContent } from './ui/Card';
+import { PriceChart, TvlChart, VolumeAndFeesChart, FeesPerTVLChart } from './ChartComponents';
 
 const StatCard = ({ icon, label, value, onShowChart }) => (
   <Card className="bg-gray-800">
@@ -26,26 +26,27 @@ const StatCard = ({ icon, label, value, onShowChart }) => (
   </Card>
 );
 
-export const StatsGrid = ({ poolData, priceRange }) => {
+export const StatsGrid = ({ poolData, priceRange, depositAmount = 1000 }) => {
   const [activeChart, setActiveChart] = useState('price');
 
   const calculatedMetrics = useMemo(() => {
     if (!poolData?.analytics?.poolDayData) return null;
 
-    // Calculate average daily fees over the timeframe
-    const dailyFees = poolData.analytics.poolDayData.map(day => Number(day.feesUSD));
+    const dailyData = poolData.analytics.poolDayData;
+    const dailyFees = dailyData.map(day => Number(day.feesUSD));
     const averageDailyFee = dailyFees.reduce((sum, fee) => sum + fee, 0) / dailyFees.length;
     
     const tvl = Number(poolData.analytics.totalValueLockedUSD);
-    const feeAPR = (averageDailyFee * 365 * 100) / tvl;
+    const volume24h = Number(poolData.analytics.volumeUSD);
+    const feesPerTVL = (averageDailyFee / tvl) * depositAmount;
 
     return {
-      volume: Number(poolData.analytics.volumeUSD),
+      volume: volume24h,
       tvl,
       price: Number(poolData.analytics.token0Price),
-      feeAPR
+      dailyFeesPerDeposit: feesPerTVL
     };
-  }, [poolData]);
+  }, [poolData, depositAmount]);
 
   if (!calculatedMetrics) return null;
 
@@ -58,7 +59,7 @@ export const StatsGrid = ({ poolData, priceRange }) => {
           value={`$${calculatedMetrics.volume.toLocaleString(undefined, {
             maximumFractionDigits: 2
           })}`}
-          onShowChart={() => setActiveChart('volume')}
+          onShowChart={() => setActiveChart('volumeFees')}
         />
         <StatCard
           icon={<DollarSign className="w-5 h-5 text-gray-400" />}
@@ -76,19 +77,40 @@ export const StatsGrid = ({ poolData, priceRange }) => {
         />
         <StatCard
           icon={<Percent className="w-5 h-5 text-gray-400" />}
-          label="Avg Fee APR"
-          value={`${calculatedMetrics.feeAPR.toFixed(2)}%`}
-          onShowChart={() => setActiveChart('fees')}
+          label="Daily Fees per Deposit"
+          value={`$${calculatedMetrics.dailyFeesPerDeposit.toFixed(2)}`}
+          onShowChart={() => setActiveChart('feesPerTVL')}
         />
       </div>
       
       {activeChart && poolData.analytics.poolDayData && (
-        <StatChart 
-          data={poolData.analytics.poolDayData}
-          metric={activeChart}
-          priceRange={activeChart === 'price' ? priceRange : null}
-        />
+        <>
+          {activeChart === 'price' && (
+            <PriceChart 
+              data={poolData.analytics.poolDayData}
+              priceRange={priceRange}
+            />
+          )}
+          {activeChart === 'tvl' && (
+            <TvlChart 
+              data={poolData.analytics.poolDayData}
+            />
+          )}
+          {activeChart === 'volumeFees' && (
+            <VolumeAndFeesChart 
+              data={poolData.analytics.poolDayData}
+            />
+          )}
+          {activeChart === 'feesPerTVL' && (
+            <FeesPerTVLChart 
+              data={poolData.analytics.poolDayData}
+              depositAmount={depositAmount}
+            />
+          )}
+        </>
       )}
     </div>
   );
 };
+
+export default StatsGrid;
