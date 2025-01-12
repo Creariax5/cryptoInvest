@@ -79,10 +79,7 @@ const PoolSimulator = ({ poolAddress }) => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <MemoizedPoolMetrics 
-          metrics={metrics} 
-          isInRange={metrics?.activeRange}
-        />
+        <></>
       </div>
     </div>
   );
