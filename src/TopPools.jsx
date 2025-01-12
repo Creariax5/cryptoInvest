@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { TrendingUp, DollarSign, ArrowUpDown } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from './components/ui/Card';
 import { Alert, AlertCircle, AlertDescription } from './components/ui/Alert';
@@ -72,7 +72,6 @@ const TopPools = () => {
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('tvl');
   const [timePeriod, setTimePeriod] = useState('1D');
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTopPools = async () => {
@@ -203,51 +202,53 @@ const TopPools = () => {
 
         <div className="space-y-4">
           {sortedPools.map((pool) => (
-            <Card 
+            <Link 
               key={pool.id}
-              className="bg-gray-800 hover:bg-gray-700 transition-colors cursor-pointer"
-              onClick={() => navigate(`/${pool.id}`)}
+              to={`/${pool.id}`}
+              className="block no-underline"
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="text-xl font-semibold">
-                      {pool.token0.symbol}/{pool.token1.symbol}
+              <Card className="bg-gray-800 hover:bg-gray-700 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="text-xl font-semibold text-white">
+                        {pool.token0.symbol}/{pool.token1.symbol}
+                      </div>
+                      <div className="bg-blue-900 px-2 py-1 rounded text-sm">
+                        {pool.fee.toFixed(2)}% Fee
+                      </div>
+                      <div className="bg-green-900 px-2 py-1 rounded text-sm">
+                        {pool.feeApr.toFixed(2)}% APR
+                      </div>
                     </div>
-                    <div className="bg-blue-900 px-2 py-1 rounded text-sm">
-                      {pool.fee.toFixed(2)}% Fee
-                    </div>
-                    <div className="bg-green-900 px-2 py-1 rounded text-sm">
-                      {pool.feeApr.toFixed(2)}% APR
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-8">
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <div className="text-sm text-gray-400">TVL</div>
-                        <div className="font-medium">
-                          ${pool.tvl.toLocaleString(undefined, {
-                            maximumFractionDigits: 0
-                          })}
+                    <div className="flex items-center space-x-8">
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-400">TVL</div>
+                          <div className="font-medium text-white">
+                            ${pool.tvl.toLocaleString(undefined, {
+                              maximumFractionDigits: 0
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <div className="text-sm text-gray-400">{timePeriod} Volume</div>
+                          <div className="font-medium text-white">
+                            ${pool.volume.toLocaleString(undefined, {
+                              maximumFractionDigits: 0
+                            })}
+                          </div>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <TrendingUp className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <div className="text-sm text-gray-400">{timePeriod} Volume</div>
-                        <div className="font-medium">
-                          ${pool.volume.toLocaleString(undefined, {
-                            maximumFractionDigits: 0
-                          })}
-                        </div>
-                      </div>
-                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </div>

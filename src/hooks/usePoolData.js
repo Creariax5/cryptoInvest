@@ -1,7 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { fetchPoolInfo, fetchPoolAnalytics, fetchPoolTicks } from '../services/ApiServices';
 
 export const usePoolData = (poolAddress) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isTokenOrderReversed = searchParams.get('reversed') === 'true';
+  
   const [poolData, setPoolData] = useState({
     poolInfo: null,
     analytics: null,
@@ -17,117 +21,170 @@ export const usePoolData = (poolAddress) => {
     loading: true,
     error: null,
     selectedTimeframe: 30,
-    currentPrice: 0
+    currentPrice: 0,
+    isTokenOrderReversed
   });
 
-  // Keep track of the maximum timeframe we've already fetched
   const maxFetchedTimeframe = useRef(0);
-  // Store the complete pool day data
   const allPoolDayData = useRef([]);
 
-  const setTimeframe = (days) => {
+  const toggleTokenOrder = useCallback(() => {
+    // Update URL without refresh by using state instead of URL params
+    setUiState(prev => ({
+      ...prev,
+      isTokenOrderReversed: !prev.isTokenOrderReversed,
+      currentPrice: 1 / prev.currentPrice
+    }));
+
+    // Update poolData with reversed prices
+    setPoolData(prev => {
+      if (!prev.analytics?.poolDayData) return prev;
+
+      const reversedPoolDayData = prev.analytics.poolDayData.map(day => ({
+        ...day,
+        token0Price: 1 / Number(day.token0Price),
+        token1Price: 1 / Number(day.token1Price)
+      }));
+
+      return {
+        ...prev,
+        analytics: {
+          ...prev.analytics,
+          token0Price: 1 / Number(prev.analytics.token0Price),
+          token1Price: 1 / Number(prev.analytics.token1Price),
+          poolDayData: reversedPoolDayData
+        }
+      };
+    });
+
+    // Update position range
+    setPositionConfig(prev => ({
+      ...prev,
+      range: {
+        min: 1 / prev.range.max,
+        max: 1 / prev.range.min
+      }
+    }));
+
+    // Update URL without causing refresh
+    setSearchParams(
+      params => {
+        params.set('reversed', (!isTokenOrderReversed).toString());
+        return params;
+      },
+      { replace: true }
+    );
+  }, [isTokenOrderReversed, setSearchParams]);
+
+  const setTimeframe = useCallback(async (days) => {
     setUiState(prev => ({
       ...prev,
       selectedTimeframe: days
     }));
 
-    // If we need more data, fetch it in the background
     if (days > maxFetchedTimeframe.current) {
-      fetchAdditionalData(days);
-    } else {
-      // If we already have the data, just update the view
-      updatePoolDataView(days);
-    }
-  };
+      try {
+        const analytics = await fetchPoolAnalytics(poolAddress, days);
+        allPoolDayData.current = analytics.poolDayData || [];
+        maxFetchedTimeframe.current = days;
 
-  const updatePoolDataView = (days) => {
-    if (!allPoolDayData.current.length) return;
+        const processedData = uiState.isTokenOrderReversed
+          ? analytics.poolDayData.map(day => ({
+              ...day,
+              token0Price: 1 / Number(day.token0Price),
+              token1Price: 1 / Number(day.token1Price)
+            }))
+          : analytics.poolDayData;
 
-    // Filter the data we already have to match the requested timeframe
-    const filteredData = allPoolDayData.current
-      .slice(0, days)
-      .sort((a, b) => b.date - a.date);
-
-    setPoolData(prev => ({
-      ...prev,
-      analytics: {
-        ...prev.analytics,
-        poolDayData: filteredData
+        setPoolData(prev => ({
+          ...prev,
+          analytics: {
+            ...prev.analytics,
+            ...analytics,
+            poolDayData: processedData
+          }
+        }));
+      } catch (err) {
+        console.error('Error fetching additional data:', err);
       }
-    }));
-  };
+    } else {
+      // Use existing data for shorter timeframes
+      const filteredData = allPoolDayData.current
+        .slice(0, days)
+        .sort((a, b) => b.date - a.date);
 
-  const fetchAdditionalData = async (days) => {
-    try {
-      // Only fetch analytics since we need more historical data
-      const analytics = await fetchPoolAnalytics(poolAddress, days);
-      
-      // Update our cached data
-      allPoolDayData.current = analytics.poolDayData || [];
-      maxFetchedTimeframe.current = days;
-
-      // Update the UI with new data
       setPoolData(prev => ({
         ...prev,
         analytics: {
-          ...analytics,
-          poolDayData: analytics.poolDayData || []
+          ...prev.analytics,
+          poolDayData: filteredData
         }
       }));
-    } catch (err) {
-      console.error('Error fetching additional data:', err);
-      // Don't show error UI for background fetch failures
     }
-  };
+  }, [poolAddress, uiState.isTokenOrderReversed]);
 
-  const fetchInitialPoolData = useCallback(async () => {
-    try {
-      setUiState(prev => ({ ...prev, loading: true, error: null }));
-      
-      const [poolInfo, analytics, ticks] = await Promise.all([
-        fetchPoolInfo(poolAddress),
-        fetchPoolAnalytics(poolAddress, uiState.selectedTimeframe),
-        fetchPoolTicks(poolAddress)
-      ]);
-
-      const currentPrice = analytics?.token0Price ? Number(analytics.token0Price) : 0;
-      
-      // Store the initial pool day data
-      allPoolDayData.current = analytics.poolDayData || [];
-      maxFetchedTimeframe.current = uiState.selectedTimeframe;
-
-      setPoolData({ poolInfo, analytics, ticks });
-      setUiState(prev => ({ ...prev, currentPrice }));
-      
-      if (positionConfig.range.min === 0 && currentPrice > 0) {
-        setPositionConfig(prev => ({
-          ...prev,
-          range: {
-            min: currentPrice * 0.8,
-            max: currentPrice * 1.2
-          }
-        }));
-      }
-    } catch (err) {
-      setUiState(prev => ({ 
-        ...prev, 
-        error: 'Failed to load pool data. Please try again later.'
-      }));
-      console.error('Error fetching data:', err);
-    } finally {
-      setUiState(prev => ({ ...prev, loading: false }));
-    }
-  }, [poolAddress]);
-
+  // Initial data fetch
   useEffect(() => {
+    const fetchInitialPoolData = async () => {
+      try {
+        setUiState(prev => ({ ...prev, loading: true, error: null }));
+        
+        const [poolInfo, analytics, ticks] = await Promise.all([
+          fetchPoolInfo(poolAddress),
+          fetchPoolAnalytics(poolAddress, uiState.selectedTimeframe),
+          fetchPoolTicks(poolAddress)
+        ]);
+
+        let currentPrice = analytics?.token0Price ? Number(analytics.token0Price) : 0;
+        
+        if (isTokenOrderReversed) {
+          currentPrice = 1 / currentPrice;
+          analytics.poolDayData = analytics.poolDayData.map(day => ({
+            ...day,
+            token0Price: 1 / Number(day.token0Price),
+            token1Price: 1 / Number(day.token1Price)
+          }));
+        }
+
+        allPoolDayData.current = analytics.poolDayData || [];
+        maxFetchedTimeframe.current = uiState.selectedTimeframe;
+
+        setPoolData({ poolInfo, analytics, ticks });
+        setUiState(prev => ({ 
+          ...prev, 
+          currentPrice,
+          loading: false,
+          isTokenOrderReversed 
+        }));
+        
+        if (positionConfig.range.min === 0 && currentPrice > 0) {
+          setPositionConfig(prev => ({
+            ...prev,
+            range: {
+              min: currentPrice * 0.8,
+              max: currentPrice * 1.2
+            }
+          }));
+        }
+      } catch (err) {
+        setUiState(prev => ({ 
+          ...prev, 
+          error: 'Failed to load pool data. Please try again later.',
+          loading: false
+        }));
+        console.error('Error fetching data:', err);
+      }
+    };
+
     fetchInitialPoolData();
-  }, [fetchInitialPoolData]);
+  }, [poolAddress]); // Remove isTokenOrderReversed dependency
 
   return { 
     poolData, 
     positionConfig, 
-    uiState, 
+    uiState,
     setPositionConfig,
-    setTimeframe 
+    setTimeframe,
+    toggleTokenOrder
   };
 };

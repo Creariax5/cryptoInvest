@@ -3,7 +3,7 @@ const API_BASE_URL = 'https://crypto-api-xi.vercel.app/api/v1/crypto';
 
 export const fetchPoolInfo = async (poolAddress) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/pool/${poolAddress}`);
+    const response = await fetch(`${API_BASE_URL}/pool/${poolAddress}/info`);
     if (!response.ok) {
       throw new Error('Failed to fetch pool info');
     }

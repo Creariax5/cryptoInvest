@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { TrendingUp, DollarSign, Activity, Percent, BarChart2 } from 'lucide-react';
 import { Card, CardContent } from './ui/Card';
-import { PriceChart, TvlChart, VolumeAndFeesChart, FeesPerTVLChart } from './ChartComponents';
+import { PriceChart, TvlChart, VolumeAndFeesChart, FeesPerTVLChart } from './chart/ChartComponents';
 
 const StatCard = ({ icon, label, value, onShowChart }) => (
   <Card className="bg-gray-800">
-    <CardContent className="pt-6">
+    <CardContent className="pt-4 pb-0">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {icon}
