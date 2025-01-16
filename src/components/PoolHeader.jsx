@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle } from "./ui/Card";
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, Home } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const TokenPair = ({ token0, token1, onSwap }) => {
   return (
@@ -45,6 +46,12 @@ export const PoolHeader = ({
     <Card className="bg-gray-800">
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center space-x-4">
+          <Link
+            to={`/`}
+            className="block no-underline"
+          >
+            <Home className="w-6 h-6 text-gray-400"></Home>
+          </Link>
           <TokenPair 
             token0={token0}
             token1={token1}

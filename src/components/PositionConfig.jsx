@@ -57,7 +57,7 @@ export const PositionConfig = ({
             value={positionConfig.depositAmount}
             onChange={(e) => setPositionConfig(prev => ({
               ...prev,
-              depositAmount: Number(e.target.value)
+              depositAmount: e.target.value == '' ? '' : Number(e.target.value)
             }))}
             className="w-full bg-gray-700 rounded p-2"
             min="0"
@@ -78,10 +78,11 @@ export const PositionConfig = ({
                 value={positionConfig.range.min}
                 onChange={(e) => setPositionConfig(prev => ({
                   ...prev,
-                  range: { ...prev.range, min: Number(e.target.value) }
+                  range: { ...prev.range, min: (e.target.value) }
                 }))}
                 className="w-full bg-gray-700 rounded p-2"
                 min="0"
+                step={currentPrice / 100}
               />
               <input
                 type="range"
@@ -106,10 +107,11 @@ export const PositionConfig = ({
                 value={positionConfig.range.max}
                 onChange={(e) => setPositionConfig(prev => ({
                   ...prev,
-                  range: { ...prev.range, max: Number(e.target.value) }
+                  range: { ...prev.range, max: (e.target.value) }
                 }))}
                 className="w-full bg-gray-700 rounded p-2"
                 min="0"
+                step={currentPrice / 100}
               />
               <input
                 type="range"
@@ -131,9 +133,19 @@ export const PositionConfig = ({
           <input
             type="number"
             value={timeframe}
-            onChange={(e) => onTimeframeChange(Math.max(1, Math.min(365, Number(e.target.value))))}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === '') {
+                onTimeframeChange('');
+              } else {
+                const num = Number(value);
+                if (!isNaN(num)) {
+                  onTimeframeChange(Math.max(1, Math.min(365, Number(e.target.value))))
+                }
+              }
+            }}
             className="w-full bg-gray-700 rounded p-2 mb-2"
-            min="1"
+            min="0"
             max="365"
           />
           <input

@@ -109,10 +109,10 @@ export const PositionMetrics = ({ metrics, positionConfig, isInRange }) => {
               <input
                 type="number"
                 value={projectionYears}
-                onChange={(e) => setProjectionYears(Math.max(0.1, Number(e.target.value)))}
+                onChange={(e) => setProjectionYears(e.target.value)}
                 className="w-full bg-gray-700 rounded p-2 text-white"
-                min="0.1"
-                step="0.1"
+                min="1"
+                step="1"
               />
             </div>
             {showAPY && (
@@ -183,7 +183,7 @@ export const PositionMetrics = ({ metrics, positionConfig, isInRange }) => {
                 Total Value After {projectionYears} {projectionYears === 1 ? 'Year' : 'Years'}
               </span>
               <div className="text-2xl font-bold text-green-500">
-                ${calculatedMetrics.totalValue.toFixed(2)}
+                ${Number(calculatedMetrics.totalValue).toFixed(2)}
               </div>
               <div className="text-sm text-gray-400">
                 +${calculatedMetrics.totalReturn.toFixed(2)} profit
