@@ -26,7 +26,7 @@ const PoolSimulator = ({ poolAddress }) => {
     setTimeframe,
     toggleTokenOrder 
   } = usePoolData(poolAddress);
-  
+
   const metrics = usePoolMetrics(poolData, uiState, positionConfig);
 
   if (uiState.loading) {

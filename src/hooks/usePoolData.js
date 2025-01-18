@@ -28,23 +28,30 @@ export const usePoolData = (poolAddress) => {
   const maxFetchedTimeframe = useRef(0);
   const allPoolDayData = useRef([]);
 
+  // Helper function to reverse pool day data
+  const reversePoolDayData = useCallback((data) => {
+    return data.map(day => ({
+      ...day,
+      token0Price: 1 / Number(day.token0Price),
+      token1Price: 1 / Number(day.token1Price)
+    }));
+  }, []);
+
   const toggleTokenOrder = useCallback(() => {
-    // Update URL without refresh by using state instead of URL params
+    const newIsReversed = !uiState.isTokenOrderReversed;
+
+    // Update UI state first
     setUiState(prev => ({
       ...prev,
-      isTokenOrderReversed: !prev.isTokenOrderReversed,
+      isTokenOrderReversed: newIsReversed,
       currentPrice: 1 / prev.currentPrice
     }));
 
-    // Update poolData with reversed prices
+    // Update pool data
     setPoolData(prev => {
       if (!prev.analytics?.poolDayData) return prev;
 
-      const reversedPoolDayData = prev.analytics.poolDayData.map(day => ({
-        ...day,
-        token0Price: 1 / Number(day.token0Price),
-        token1Price: 1 / Number(day.token1Price)
-      }));
+      const reversedPoolDayData = reversePoolDayData(prev.analytics.poolDayData);
 
       return {
         ...prev,
@@ -66,15 +73,11 @@ export const usePoolData = (poolAddress) => {
       }
     }));
 
-    // Update URL without causing refresh
-    setSearchParams(
-      params => {
-        params.set('reversed', (!isTokenOrderReversed).toString());
-        return params;
-      },
-      { replace: true }
-    );
-  }, [isTokenOrderReversed, setSearchParams]);
+    // Update URL params last, with replace: true to prevent navigation
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('reversed', newIsReversed.toString());
+    setSearchParams(newParams, { replace: true });
+  }, [uiState.isTokenOrderReversed, setSearchParams, reversePoolDayData, searchParams]);
 
   const setTimeframe = useCallback(async (days) => {
     setUiState(prev => ({
@@ -82,18 +85,18 @@ export const usePoolData = (poolAddress) => {
       selectedTimeframe: days
     }));
 
-    if (days > maxFetchedTimeframe.current) {
-      try {
+    try {
+      if (days > maxFetchedTimeframe.current) {
+        // Fetch new data if needed
         const analytics = await fetchPoolAnalytics(poolAddress, days);
+        
+        // Store original data
         allPoolDayData.current = analytics.poolDayData || [];
         maxFetchedTimeframe.current = days;
 
+        // Process data according to current token order
         const processedData = uiState.isTokenOrderReversed
-          ? analytics.poolDayData.map(day => ({
-              ...day,
-              token0Price: 1 / Number(day.token0Price),
-              token1Price: 1 / Number(day.token1Price)
-            }))
+          ? reversePoolDayData(analytics.poolDayData)
           : analytics.poolDayData;
 
         setPoolData(prev => ({
@@ -104,24 +107,29 @@ export const usePoolData = (poolAddress) => {
             poolDayData: processedData
           }
         }));
-      } catch (err) {
-        console.error('Error fetching additional data:', err);
-      }
-    } else {
-      // Use existing data for shorter timeframes
-      const filteredData = allPoolDayData.current
-        .slice(0, days)
-        .sort((a, b) => b.date - a.date);
+      } else {
+        // Use existing data for shorter timeframes
+        const filteredData = allPoolDayData.current
+          .slice(0, days)
+          .sort((a, b) => b.date - a.date);
 
-      setPoolData(prev => ({
-        ...prev,
-        analytics: {
-          ...prev.analytics,
-          poolDayData: filteredData
-        }
-      }));
+        // Process filtered data according to current token order
+        const processedData = uiState.isTokenOrderReversed
+          ? reversePoolDayData(filteredData)
+          : filteredData;
+
+        setPoolData(prev => ({
+          ...prev,
+          analytics: {
+            ...prev.analytics,
+            poolDayData: processedData
+          }
+        }));
+      }
+    } catch (err) {
+      console.error('Error updating timeframe:', err);
     }
-  }, [poolAddress, uiState.isTokenOrderReversed]);
+  }, [poolAddress, uiState.isTokenOrderReversed, reversePoolDayData]);
 
   // Initial data fetch
   useEffect(() => {
@@ -136,20 +144,25 @@ export const usePoolData = (poolAddress) => {
         ]);
 
         let currentPrice = analytics?.token0Price ? Number(analytics.token0Price) : 0;
+        let processedAnalytics = { ...analytics };
         
         if (isTokenOrderReversed) {
           currentPrice = 1 / currentPrice;
-          analytics.poolDayData = analytics.poolDayData.map(day => ({
-            ...day,
-            token0Price: 1 / Number(day.token0Price),
-            token1Price: 1 / Number(day.token1Price)
-          }));
+          processedAnalytics.token0Price = 1 / Number(analytics.token0Price);
+          processedAnalytics.token1Price = 1 / Number(analytics.token1Price);
+          processedAnalytics.poolDayData = reversePoolDayData(analytics.poolDayData);
         }
 
+        // Store original data
         allPoolDayData.current = analytics.poolDayData || [];
         maxFetchedTimeframe.current = uiState.selectedTimeframe;
 
-        setPoolData({ poolInfo, analytics, ticks });
+        setPoolData({ 
+          poolInfo, 
+          analytics: processedAnalytics, 
+          ticks 
+        });
+        
         setUiState(prev => ({ 
           ...prev, 
           currentPrice,
@@ -177,7 +190,7 @@ export const usePoolData = (poolAddress) => {
     };
 
     fetchInitialPoolData();
-  }, [poolAddress]); // Remove isTokenOrderReversed dependency
+  }, [poolAddress, isTokenOrderReversed, reversePoolDayData]);
 
   return { 
     poolData, 
