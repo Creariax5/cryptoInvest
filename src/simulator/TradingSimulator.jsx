@@ -13,7 +13,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ArrowUpCircle, ArrowDownCircle, Coins } from 'lucide-react';
 
-const TradingSimulator = ({ poolInfo, onClose }) => {
+export const TradingSimulator = ({ poolInfo, onClose }) => {
   // Generate realistic price data based on pool info
   const generateTradeData = () => {
     const data = [];
@@ -227,5 +227,3 @@ const TradingSimulator = ({ poolInfo, onClose }) => {
     </Card>
   );
 };
-
-export default TradingSimulator;

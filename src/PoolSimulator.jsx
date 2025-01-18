@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from './components/ui/Alert';
 import { usePoolData } from './hooks/usePoolData';
@@ -9,6 +9,7 @@ import { PositionConfig } from './components/PositionConfig';
 import { PositionMetrics } from './components/PositionMetrics';
 import { PoolMetrics } from './components/PoolMetrics';
 import { StatsGrid } from './components/StatsGrid';
+import { TradingSimulator } from "./simulator/TradingSimulator";
 
 // Memoize child components to prevent unnecessary re-renders
 const MemoizedPoolHeader = memo(PoolHeader);
@@ -28,6 +29,7 @@ const PoolSimulator = ({ poolAddress }) => {
   } = usePoolData(poolAddress);
 
   const metrics = usePoolMetrics(poolData, uiState, positionConfig);
+  const [showSimulator, setShowSimulator] = useState(false);
 
   if (uiState.loading) {
     return <LoadingState />;
@@ -54,33 +56,46 @@ const PoolSimulator = ({ poolAddress }) => {
         currentPrice={uiState.currentPrice}
         isTokenOrderReversed={uiState.isTokenOrderReversed}
         onToggleTokenOrder={toggleTokenOrder}
+        showSimulator={showSimulator}
+        setShowSimulator={setShowSimulator}
       />
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="grid grid-cols-2 gap-6">  
-          <MemoizedPositionConfig
-            positionConfig={positionConfig}
-            setPositionConfig={setPositionConfig}
-            currentPrice={uiState.currentPrice}
-            timeframe={uiState.selectedTimeframe}
-            onTimeframeChange={handleTimeframeChange}
-          />
-          <MemoizedPositionMetrics 
-            metrics={metrics}
-            positionConfig={positionConfig}
-            isInRange={metrics?.activeRange}
+      {showSimulator ?
+        <div className="mt-6">
+          <TradingSimulator 
+            poolInfo={poolData.poolInfo} 
+            onClose={() => setShowSimulator(false)} 
           />
         </div>
-        <MemoizedStatsGrid 
-          poolData={poolData} 
-          priceRange={positionConfig.range}
-          depositAmount={positionConfig.depositAmount}
-        />
-      </div>
+      :
+        <div>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6">  
+              <MemoizedPositionConfig
+                positionConfig={positionConfig}
+                setPositionConfig={setPositionConfig}
+                currentPrice={uiState.currentPrice}
+                timeframe={uiState.selectedTimeframe}
+                onTimeframeChange={handleTimeframeChange}
+              />
+              <MemoizedPositionMetrics 
+                metrics={metrics}
+                positionConfig={positionConfig}
+                isInRange={metrics?.activeRange}
+              />
+            </div>
+            <MemoizedStatsGrid 
+              poolData={poolData} 
+              priceRange={positionConfig.range}
+              depositAmount={positionConfig.depositAmount}
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <></>
-      </div>
+          <div className="grid grid-cols-2 gap-4">
+            <></>
+          </div>
+        </div>
+      }
     </div>
   );
 };

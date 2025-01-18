@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle } from "./ui/Card";
 import { ArrowLeftRight, Home, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import TradingSimulator from '../simulator/TradingSimulator';
 
 const TokenPair = ({ token0, token1, onSwap }) => {
   return (
@@ -26,9 +25,10 @@ export const PoolHeader = ({
   poolInfo, 
   currentPrice, 
   isTokenOrderReversed,
-  onToggleTokenOrder 
+  onToggleTokenOrder,
+  showSimulator,
+  setShowSimulator,
 }) => {
-  const [showSimulator, setShowSimulator] = useState(false);
 
   if (!poolInfo?.token0 || !poolInfo?.token1) {
     return (
@@ -80,15 +80,6 @@ export const PoolHeader = ({
           </div>
         </CardHeader>
       </Card>
-
-      {showSimulator && (
-        <div className="mt-6">
-          <TradingSimulator 
-            poolInfo={poolInfo} 
-            onClose={() => setShowSimulator(false)} 
-          />
-        </div>
-      )}
     </>
   );
 };
