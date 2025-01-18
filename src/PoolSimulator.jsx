@@ -62,8 +62,8 @@ const PoolSimulator = ({ poolAddress }) => {
 
       {showSimulator ?
         <div className="mt-6">
-          <TradingSimulator 
-            poolInfo={poolData.poolInfo} 
+          <TradingSimulator
+            poolData={poolData} 
             onClose={() => setShowSimulator(false)} 
           />
         </div>

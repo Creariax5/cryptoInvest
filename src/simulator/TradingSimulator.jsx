@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -13,39 +13,25 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { ArrowUpCircle, ArrowDownCircle, Coins } from 'lucide-react';
 
-export const TradingSimulator = ({ poolInfo, onClose }) => {
-  // Generate realistic price data based on pool info
-  const generateTradeData = () => {
-    const data = [];
-    let price = poolInfo?.token0Price || 35000;
-    const volatility = 0.03;
-    const trend = 0.001;
-    
-    const now = new Date();
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      
-      const change = (Math.random() - 0.5) * 2 * volatility + trend;
-      price = price * (1 + change);
-      
-      if (Math.random() < 0.1) {
-        price = price * (1 + (Math.random() - 0.5) * 0.1);
-      }
-      
-      data.push({
-        date: date.toLocaleDateString(),
-        price: Number(price.toFixed(4)),
-        volume: Math.round(Math.random() * 1000 + 500)
-      });
-    }
-    return data;
-  };
-
-  const [data] = useState(generateTradeData());
+export const TradingSimulator = ({ poolData, onClose }) => {
   const [trades, setTrades] = useState([]);
   const [tradeType, setTradeType] = useState('buy');
   const [hoveredPrice, setHoveredPrice] = useState(null);
+  const poolDayData = poolData.analytics?.poolDayData;
+
+  // Process and format the pool day data
+  const chartData = useMemo(() => {
+    if (!poolDayData) return [];
+    
+    return poolDayData
+      .slice()
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .map(day => ({
+        date: new Date(day.date * 1000).toLocaleDateString(),
+        price: Number(day.token0Price),
+        volume: Number(day.volumeUSD)
+      }));
+  }, [poolDayData]);
 
   const handleChartClick = (data) => {
     if (data && data.activePayload) {
@@ -87,7 +73,7 @@ export const TradingSimulator = ({ poolInfo, onClose }) => {
         <div className="bg-gray-800 p-4 border border-gray-700 rounded shadow">
           <p className="font-semibold text-white">Date: {data.date}</p>
           <p className="text-blue-400">Price: ${data.price.toLocaleString()}</p>
-          <p className="text-gray-300">Volume: {data.volume}</p>
+          <p className="text-gray-300">Volume: ${data.volume.toLocaleString()}</p>
         </div>
       );
     }
@@ -138,7 +124,7 @@ export const TradingSimulator = ({ poolInfo, onClose }) => {
         <div className="h-96 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={data}
+              data={chartData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
               onClick={handleChartClick}
               onMouseMove={(e) => {
@@ -151,7 +137,7 @@ export const TradingSimulator = ({ poolInfo, onClose }) => {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="date" stroke="#9CA3AF" />
               <YAxis 
-                domain={['dataMin - 1000', 'dataMax + 1000']}
+                domain={['dataMin', 'dataMax']}
                 tickFormatter={(value) => `$${value.toLocaleString()}`}
                 stroke="#9CA3AF"
               />
